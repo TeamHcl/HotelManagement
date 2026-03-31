@@ -23,24 +23,27 @@ LuxeStay is a beautifully crafted frontend prototype designed to streamline luxu
 ## 📸 System Previews
 
 ### Customer Exploration & Booking
+
 Seamlessly browse global luxury resorts using optimized search filtering, then review expansive property details before initiating the dynamic checkout procedure.
 
-| Global Home  | Curated Search Results |
-| :---: | :---: |
+|                   Global Home                   |                Curated Search Results                 |
+| :---------------------------------------------: | :---------------------------------------------------: |
 | <img src="public/home.png" alt="Home Screen" /> | <img src="public/home1.png" alt="Search Directory" /> |
 
 ### Intuitive Onboarding
+
 Security meets art. Users and Managers are welcomed through an immersive aesthetic that dynamically sets the tone for a luxury platform.
 
-| Secure Sign In | Platform Registration |
-| :---: | :---: |
+|                Secure Sign In                 |             Platform Registration             |
+| :-------------------------------------------: | :-------------------------------------------: |
 | <img src="public/signin.png" alt="Sign In" /> | <img src="public/signup.png" alt="Sign Up" /> |
 
 ### Operations & Control
+
 From localized metrics for individual resort managers, to global oversight queues for platform administrators, the dashboards are engineered for speed and clarity.
 
-| Manager Operations | Global Administrator HUB |
-| :---: | :---: |
+|                   Manager Operations                   |                 Global Administrator HUB                  |
+| :----------------------------------------------------: | :-------------------------------------------------------: |
 | <img src="public/manager.png" alt="Owner Dashboard" /> | <img src="public/admin.png" alt="Admin Control Center" /> |
 
 ---
@@ -50,7 +53,7 @@ From localized metrics for individual resort managers, to global oversight queue
 LuxeStay is engineered using modern, state-of-the-art frontend tooling to guarantee sub-second interactions and high scalability.
 
 - **Framework**: [React 18](https://react.dev) + [TypeScript](https://www.typescriptlang.org) via [Vite](https://vitejs.dev/)
-- **Styling Architecture**: [Tailwind CSS v4](https://tailwindcss.com) 
+- **Styling Architecture**: [Tailwind CSS v4](https://tailwindcss.com)
 - **Component Primitives**: [shadcn/ui](https://ui.shadcn.com/)
 - **Micro-Animations**: [Framer Motion](https://www.framer.com/motion/)
 - **Routing Engine**: React Router DOM
@@ -63,6 +66,7 @@ LuxeStay is engineered using modern, state-of-the-art frontend tooling to guaran
 Run the entire LuxeStay frontend interface locally in seconds.
 
 ### Prerequisites
+
 - Node.js (v18.0.0 or higher)
 - npm or yarn
 
@@ -87,7 +91,9 @@ Visit `http://localhost:5173` to explore the application.
 ---
 
 ## 🎨 Design Philosophy
+
 The user interface isn't just painted on—it's engineered. The aesthetic relies heavily on sophisticated spatial geometry, precision ambient radial illumination (`blur-[150px]`), and deeply translucent glassmorphic components (`bg-white/5 backdrop-blur-xl`). Every interactive element utilizes Framer Motion to guarantee that layout shifts feel responsive and organic rather than abrupt.
 
 ## 🔮 Roadmap
+
 Currently, LuxeStay serves as a high-fidelity frontend prototype. The upcoming roadmap features integrating this exact architecture with a deeply unified **Spring Boot REST API** structure that handles user roles, JWT authentication, and SQL relationship mapping for hotels, rooms, and bookings.

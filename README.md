@@ -27,14 +27,8 @@ LuxeStay is a beautifully crafted frontend prototype designed to streamline luxu
 Seamlessly browse global luxury resorts using optimized search filtering, then review expansive property details before initiating the dynamic checkout procedure.
 
 <div align="center">
-  <figure style="display: inline-block; width: 48%; margin-right: 2%;">
-    <img src="public/home.png" alt="Home Screen" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);" />
-    <figcaption><strong>Global Home</strong></figcaption>
-  </figure>
-  <figure style="display: inline-block; width: 48%;">
-    <img src="public/home1.png" alt="Search Directory" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);" />
-    <figcaption><strong>Curated Search Results</strong></figcaption>
-  </figure>
+  <img src="public/home.png" alt="Home Screen" width="48%" />
+  <img src="public/home1.png" alt="Search Directory" width="48%" />
 </div>
 
 ### Intuitive Onboarding
@@ -42,14 +36,8 @@ Seamlessly browse global luxury resorts using optimized search filtering, then r
 Security meets art. Users and Managers are welcomed through an immersive aesthetic that dynamically sets the tone for a luxury platform.
 
 <div align="center">
-  <figure style="display: inline-block; width: 48%; margin-right: 2%;">
-    <img src="public/signin.png" alt="Sign In" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);" />
-    <figcaption><strong>Secure Sign In</strong></figcaption>
-  </figure>
-  <figure style="display: inline-block; width: 48%;">
-    <img src="public/signup.png" alt="Sign Up" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);" />
-    <figcaption><strong>Platform Registration</strong></figcaption>
-  </figure>
+  <img src="public/signin.png" alt="Sign In" width="48%" />
+  <img src="public/signup.png" alt="Sign Up" width="48%" />
 </div>
 
 ### Operations & Control
@@ -57,14 +45,8 @@ Security meets art. Users and Managers are welcomed through an immersive aesthet
 From localized metrics for individual resort managers, to global oversight queues for platform administrators, the dashboards are engineered for speed and clarity.
 
 <div align="center">
-  <figure style="display: inline-block; width: 48%; margin-right: 2%;">
-    <img src="public/manager.png" alt="Owner Dashboard" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);" />
-    <figcaption><strong>Manager Operations</strong></figcaption>
-  </figure>
-  <figure style="display: inline-block; width: 48%;">
-    <img src="public/admin.png" alt="Admin Control Center" style="width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);" />
-    <figcaption><strong>Global Administrator HUB</strong></figcaption>
-  </figure>
+  <img src="public/manager.png" alt="Owner Dashboard" width="48%" />
+  <img src="public/admin.png" alt="Admin Control Center" width="48%" />
 </div>
 
 ---

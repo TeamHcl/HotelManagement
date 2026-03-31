@@ -1,15 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Input } from '../../../components/ui/input'
 import { Label } from '../../../components/ui/label'
 import { Button } from '../../../components/ui/button'
 import { Mail, Lock, ArrowRight, Diamond } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import type { Variants } from 'framer-motion'
+import { toast } from 'sonner'
+import { login } from '../api/authApi'
+import { getPostAuthRoute, getStoredAuthUser, persistAuth } from '../api/authSession'
 
 export function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const navigate = useNavigate()
 
   // Stagger animation setup
   const containerVariants: Variants = {
@@ -27,6 +32,37 @@ export function Login() {
       y: 0,
       transition: { type: 'spring' as const, stiffness: 300, damping: 24 },
     },
+  }
+
+  useEffect(() => {
+    const user = getStoredAuthUser()
+    if (user) {
+      navigate(getPostAuthRoute(user.role))
+    }
+  }, [navigate])
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (isSubmitting) {
+      return
+    }
+    if (!email.trim() || !password) {
+      toast.error('Email and password are required.')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      const response = await login({ email: email.trim(), password })
+      persistAuth(response)
+      toast.success('Signed in successfully.')
+      navigate(getPostAuthRoute(response.role))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to sign in.'
+      toast.error(message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -101,10 +137,20 @@ export function Login() {
             </p>
           </motion.div>
 
+          <motion.div
+            variants={itemVariants}
+            className="mb-8 rounded-2xl border border-cyan-500/20 bg-cyan-500/10 p-4 text-sm text-cyan-50"
+          >
+            <p className="font-semibold">Default admin login</p>
+            <p className="text-cyan-100/70">Email: admin@luxestay.local</p>
+            <p className="text-cyan-100/70">Password: Admin@12345</p>
+          </motion.div>
+
           {/* Social Logins */}
           <motion.div variants={itemVariants} className="flex gap-4 mb-8">
             <Button
               variant="outline"
+              type="button"
               className="flex-1 h-12 glass border-white/10 hover:bg-white/5 rounded-xl font-medium tracking-wide"
             >
               <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
@@ -129,6 +175,7 @@ export function Login() {
             </Button>
             <Button
               variant="outline"
+              type="button"
               className="flex-1 h-12 glass border-white/10 hover:bg-white/5 rounded-xl font-medium tracking-wide"
             >
               <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 24 24">
@@ -147,75 +194,80 @@ export function Login() {
             </div>
           </motion.div>
 
-          {/* Form Fields */}
-          <div className="space-y-6">
-            <motion.div variants={itemVariants} className="space-y-2 group">
-              <Label
-                htmlFor="email"
-                className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1"
-              >
-                Email
-              </Label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-3.5 h-4 w-4 text-muted-foreground group-focus-within:text-cyan-400 transition-colors" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  className="pl-11 h-12 bg-white/5 border-white/10 focus-visible:ring-cyan-400/50 text-base rounded-xl transition-all hover:bg-white/10"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </motion.div>
-
-            <motion.div variants={itemVariants} className="space-y-2 group">
-              <div className="flex items-center justify-between ml-1">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-6">
+              <motion.div variants={itemVariants} className="space-y-2 group">
                 <Label
-                  htmlFor="password"
-                  className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                  htmlFor="email"
+                  className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1"
                 >
-                  Password
+                  Email
                 </Label>
-                <Link
-                  to="/forgot-password"
-                  className="text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-colors"
-                >
-                  Recovery options
-                </Link>
-              </div>
-              <div className="relative">
-                <Lock className="absolute left-4 top-3.5 h-4 w-4 text-muted-foreground group-focus-within:text-cyan-400 transition-colors" />
-                <Input
-                  id="password"
-                  type="password"
-                  className="pl-11 h-12 bg-white/5 border-white/10 focus-visible:ring-cyan-400/50 text-base rounded-xl transition-all hover:bg-white/10"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-            </motion.div>
-          </div>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-3.5 h-4 w-4 text-muted-foreground group-focus-within:text-cyan-400 transition-colors" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    className="pl-11 h-12 bg-white/5 border-white/10 focus-visible:ring-cyan-400/50 text-base rounded-xl transition-all hover:bg-white/10"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+              </motion.div>
 
-          <motion.div variants={itemVariants} className="flex flex-col gap-6 mt-10">
-            <Button className="w-full h-14 text-lg font-bold bg-cyan-500 hover:bg-cyan-400 text-black shadow-[0_0_30px_-5px_rgba(34,211,238,0.4)] rounded-xl transition-all group overflow-hidden relative">
-              <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-100%)] group-hover:duration-1000 group-hover:[transform:skew(-12deg)_translateX(100%)]">
-                <div className="relative h-full w-8 bg-white/30" />
-              </div>
-              Sign In
-              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1.5 transition-transform" />
-            </Button>
+              <motion.div variants={itemVariants} className="space-y-2 group">
+                <div className="flex items-center justify-between ml-1">
+                  <Label
+                    htmlFor="password"
+                    className="text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                  >
+                    Password
+                  </Label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-colors"
+                  >
+                    Recovery options
+                  </Link>
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-3.5 h-4 w-4 text-muted-foreground group-focus-within:text-cyan-400 transition-colors" />
+                  <Input
+                    id="password"
+                    type="password"
+                    className="pl-11 h-12 bg-white/5 border-white/10 focus-visible:ring-cyan-400/50 text-base rounded-xl transition-all hover:bg-white/10"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+              </motion.div>
+            </div>
 
-            <p className="text-sm font-medium text-center text-muted-foreground">
-              New to LuxeStay?{' '}
-              <Link
-                to="/register"
-                className="text-white font-bold hover:text-cyan-300 transition-colors ml-1 border-b border-transparent hover:border-cyan-300 pb-0.5"
+            <motion.div variants={itemVariants} className="flex flex-col gap-6 mt-10">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-14 text-lg font-bold bg-cyan-500 hover:bg-cyan-400 text-black shadow-[0_0_30px_-5px_rgba(34,211,238,0.4)] rounded-xl transition-all group overflow-hidden relative"
               >
-                Create an account
-              </Link>
-            </p>
-          </motion.div>
+                <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-100%)] group-hover:duration-1000 group-hover:[transform:skew(-12deg)_translateX(100%)]">
+                  <div className="relative h-full w-8 bg-white/30" />
+                </div>
+                {isSubmitting ? 'Signing In...' : 'Sign In'}
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1.5 transition-transform" />
+              </Button>
+
+              <p className="text-sm font-medium text-center text-muted-foreground">
+                New to LuxeStay?{' '}
+                <Link
+                  to="/register"
+                  className="text-white font-bold hover:text-cyan-300 transition-colors ml-1 border-b border-transparent hover:border-cyan-300 pb-0.5"
+                >
+                  Create an account
+                </Link>
+              </p>
+            </motion.div>
+          </form>
         </motion.div>
       </div>
     </div>

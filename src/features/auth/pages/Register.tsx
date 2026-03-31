@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Input } from '../../../components/ui/input'
 import { Label } from '../../../components/ui/label'
 import { Button } from '../../../components/ui/button'
@@ -10,12 +10,21 @@ import {
   SelectValue,
 } from '../../../components/ui/select'
 import { Mail, Lock, User, ArrowRight, ShieldCheck, Diamond } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import type { Variants } from 'framer-motion'
+import { toast } from 'sonner'
+import { register } from '../api/authApi'
+import { getPostAuthRoute, getStoredAuthUser, persistAuth } from '../api/authSession'
 
 export function Register() {
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [role, setRole] = useState('CUSTOMER')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const navigate = useNavigate()
 
   // Stagger animation setup
   const containerVariants: Variants = {
@@ -33,6 +42,44 @@ export function Register() {
       y: 0,
       transition: { type: 'spring' as const, stiffness: 300, damping: 24 },
     },
+  }
+
+  useEffect(() => {
+    const user = getStoredAuthUser()
+    if (user) {
+      navigate(getPostAuthRoute(user.role))
+    }
+  }, [navigate])
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (isSubmitting) {
+      return
+    }
+
+    const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ')
+    if (!fullName || !email.trim() || !password) {
+      toast.error('Name, email, and password are required.')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      const response = await register({
+        name: fullName,
+        email: email.trim(),
+        password,
+        role,
+      })
+      persistAuth(response)
+      toast.success('Account created successfully.')
+      navigate(getPostAuthRoute(response.role))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to register.'
+      toast.error(message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -112,6 +159,7 @@ export function Register() {
           <motion.div variants={itemVariants} className="flex gap-4 mb-8">
             <Button
               variant="outline"
+              type="button"
               className="flex-1 h-12 glass border-white/10 hover:bg-white/5 rounded-xl font-medium tracking-wide"
             >
               <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
@@ -136,6 +184,7 @@ export function Register() {
             </Button>
             <Button
               variant="outline"
+              type="button"
               className="flex-1 h-12 glass border-white/10 hover:bg-white/5 rounded-xl font-medium tracking-wide"
             >
               <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 24 24">
@@ -156,8 +205,7 @@ export function Register() {
             </div>
           </motion.div>
 
-          {/* Form Fields */}
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4">
               <div className="space-y-2 group col-span-2 sm:col-span-1">
                 <Label
@@ -172,6 +220,8 @@ export function Register() {
                     id="firstName"
                     placeholder="John"
                     className="pl-11 h-12 bg-white/5 border-white/10 focus-visible:ring-cyan-400/50 text-base rounded-xl transition-all hover:bg-white/10"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
                   />
                 </div>
               </div>
@@ -186,6 +236,8 @@ export function Register() {
                   id="lastName"
                   placeholder="Doe"
                   className="px-4 h-12 bg-white/5 border-white/10 focus-visible:ring-cyan-400/50 text-base rounded-xl transition-all hover:bg-white/10"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                 />
               </div>
             </motion.div>
@@ -204,6 +256,8 @@ export function Register() {
                   type="email"
                   placeholder="m@example.com"
                   className="pl-11 h-12 bg-white/5 border-white/10 focus-visible:ring-cyan-400/50 text-base rounded-xl transition-all hover:bg-white/10"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
             </motion.div>
@@ -240,6 +294,8 @@ export function Register() {
                   id="password"
                   type="password"
                   className="pl-11 h-12 bg-white/5 border-white/10 focus-visible:ring-cyan-400/50 text-base rounded-xl transition-all hover:bg-white/10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
             </motion.div>
@@ -267,27 +323,31 @@ export function Register() {
                 .
               </p>
             </motion.div>
-          </div>
 
-          <motion.div variants={itemVariants} className="flex flex-col gap-5 mt-8">
-            <Button className="w-full h-14 text-lg font-bold bg-cyan-500 hover:bg-cyan-400 text-black shadow-[0_0_30px_-5px_rgba(34,211,238,0.4)] rounded-xl transition-all group overflow-hidden relative">
-              <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-100%)] group-hover:duration-1000 group-hover:[transform:skew(-12deg)_translateX(100%)]">
-                <div className="relative h-full w-8 bg-white/30" />
-              </div>
-              Create Account
-              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1.5 transition-transform" />
-            </Button>
-
-            <p className="text-sm font-medium text-center text-muted-foreground">
-              Already have an account?{' '}
-              <Link
-                to="/login"
-                className="text-white font-bold hover:text-cyan-300 transition-colors ml-1 border-b border-transparent hover:border-cyan-300 pb-0.5"
+            <motion.div variants={itemVariants} className="flex flex-col gap-5 mt-8">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-14 text-lg font-bold bg-cyan-500 hover:bg-cyan-400 text-black shadow-[0_0_30px_-5px_rgba(34,211,238,0.4)] rounded-xl transition-all group overflow-hidden relative"
               >
-                Sign in
-              </Link>
-            </p>
-          </motion.div>
+                <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-100%)] group-hover:duration-1000 group-hover:[transform:skew(-12deg)_translateX(100%)]">
+                  <div className="relative h-full w-8 bg-white/30" />
+                </div>
+                {isSubmitting ? 'Creating Account...' : 'Create Account'}
+                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1.5 transition-transform" />
+              </Button>
+
+              <p className="text-sm font-medium text-center text-muted-foreground">
+                Already have an account?{' '}
+                <Link
+                  to="/login"
+                  className="text-white font-bold hover:text-cyan-300 transition-colors ml-1 border-b border-transparent hover:border-cyan-300 pb-0.5"
+                >
+                  Sign in
+                </Link>
+              </p>
+            </motion.div>
+          </form>
         </motion.div>
       </div>
     </div>

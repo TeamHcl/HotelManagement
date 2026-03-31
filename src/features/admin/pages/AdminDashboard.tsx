@@ -1,15 +1,5 @@
-import { useState } from 'react'
-import {
-  CheckCircle2,
-  XCircle,
-  FileText,
-  Search,
-  ShieldCheck,
-  Activity,
-  UserPlus,
-  Building,
-  LogIn,
-} from 'lucide-react'
+import { useState, useEffect, type ReactNode } from 'react'
+import { CheckCircle2, XCircle, FileText, Search, ShieldCheck, Activity } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -29,71 +19,33 @@ import {
 import { Badge } from '../../../components/ui/badge'
 import { Input } from '../../../components/ui/input'
 import { motion } from 'framer-motion'
-
-const INITIAL_MOCK_PENDING_DOCS = [
-  {
-    id: '1',
-    hotel: 'Metropolitan Oasis',
-    type: 'GST_CERTIFICATE',
-    uploadedAt: '2023-11-04 14:30',
-    status: 'PENDING',
-  },
-  {
-    id: '2',
-    hotel: 'Metropolitan Oasis',
-    type: 'OWNERSHIP_PROOF',
-    uploadedAt: '2023-11-04 14:45',
-    status: 'PENDING',
-  },
-]
-
-const INITIAL_MOCK_ACTIVITY = [
-  {
-    id: 'a1',
-    log: 'New customer "Alice" registered',
-    time: '10 mins ago',
-    icon: <UserPlus className="w-4 h-4 text-cyan-400" />,
-  },
-  {
-    id: 'a2',
-    log: 'Booking confirmed at The Grand Sapphire',
-    time: '1 hour ago',
-    icon: <Building className="w-4 h-4 text-emerald-400" />,
-  },
-  {
-    id: 'a3',
-    log: 'Manager "Marcus" logged in',
-    time: '2 hours ago',
-    icon: <LogIn className="w-4 h-4 text-indigo-400" />,
-  },
-]
+import { Link } from 'react-router-dom'
+import { toast } from 'sonner'
+import { adminApi, type PendingHotel } from '../api/adminApi'
 
 export function AdminDashboard() {
-  const [pendingDocs, setPendingDocs] = useState(INITIAL_MOCK_PENDING_DOCS)
-  const [activities, setActivities] = useState(INITIAL_MOCK_ACTIVITY)
+  const [pendingDocs, setPendingDocs] = useState<PendingHotel[]>([])
+  const activities: Array<{ id: string; log: string; time: string; icon?: ReactNode }> = []
 
-  const handleDocumentAction = (
-    id: string,
+  useEffect(() => {
+    adminApi.getPendingHotels()
+      .then(setPendingDocs)
+      .catch((err) => console.error('Failed to load pending hotels', err))
+  }, [])
+
+  const handleDocumentAction = async (
+    id: number,
     action: 'approved' | 'rejected',
-    hotelName: string,
-    docType: string,
   ) => {
-    // Remove from queue
-    setPendingDocs((prev) => prev.filter((doc) => doc.id !== id))
+    try {
+      await adminApi.decideHotel(id, action === 'approved' ? 'APPROVE' : 'REJECT')
+      // Remove from queue
+      setPendingDocs((prev) => prev.filter((doc) => doc.id !== id))
 
-    // Add to system activity
-    const newActivity = {
-      id: Date.now().toString(),
-      log: `Document ${docType} for ${hotelName} was ${action}`,
-      time: 'Just now',
-      icon:
-        action === 'approved' ? (
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-        ) : (
-          <XCircle className="w-4 h-4 text-red-500" />
-        ),
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to update hotel status.'
+      toast.error(message)
     }
-    setActivities((prev) => [newActivity, ...prev])
   }
   return (
     <div className="relative min-h-screen">
@@ -118,6 +70,13 @@ export function AdminDashboard() {
               activity.
             </p>
           </div>
+          <Button
+            asChild
+            variant="outline"
+            className="border-white/10 text-white hover:bg-white/10"
+          >
+            <Link to="/admin/promotions">Manage Promotions</Link>
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -155,22 +114,26 @@ export function AdminDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 pt-5 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                {activities.map((act) => (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    key={act.id}
-                    className="flex gap-4 items-start"
-                  >
-                    <div className="mt-1 flex-shrink-0 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                      {act.icon}
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium text-emerald-50 leading-snug">{act.log}</p>
-                      <p className="text-xs text-emerald-100/40 font-mono">{act.time}</p>
-                    </div>
-                  </motion.div>
-                ))}
+                {activities.length === 0 ? (
+                  <div className="text-sm text-emerald-100/50">No activity yet.</div>
+                ) : (
+                  activities.map((act) => (
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      key={act.id}
+                      className="flex gap-4 items-start"
+                    >
+                      <div className="mt-1 flex-shrink-0 w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                        {act.icon}
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium text-emerald-50 leading-snug">{act.log}</p>
+                        <p className="text-xs text-emerald-100/40 font-mono">{act.time}</p>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
               </CardContent>
             </Card>
           </div>
@@ -217,7 +180,7 @@ export function AdminDashboard() {
                           className="border-b border-white/5 hover:bg-white/5 transition-colors group"
                         >
                           <TableCell className="py-4 px-6 font-bold text-white text-base">
-                            {doc.hotel}
+                            {doc.name}
                           </TableCell>
                           <TableCell className="py-4">
                             <div className="flex items-center gap-3">
@@ -225,12 +188,12 @@ export function AdminDashboard() {
                                 <FileText className="w-4 h-4 text-indigo-400" />
                               </div>
                               <span className="text-xs font-bold text-indigo-100/80 uppercase tracking-widest">
-                                {doc.type}
+                                PROPERTY_REVIEW
                               </span>
                             </div>
                           </TableCell>
                           <TableCell className="py-4 text-emerald-100/60 font-mono text-sm">
-                            {doc.uploadedAt}
+                            {new Date(doc.createdAt).toLocaleDateString()}
                           </TableCell>
                           <TableCell className="py-4 pr-6 text-right">
                             <div className="flex items-center justify-end gap-3 opacity-100 sm:opacity-50 group-hover:opacity-100 transition-opacity">
@@ -238,7 +201,7 @@ export function AdminDashboard() {
                                 size="icon"
                                 variant="outline"
                                 onClick={() =>
-                                  handleDocumentAction(doc.id, 'approved', doc.hotel, doc.type)
+                                  handleDocumentAction(doc.id, 'approved')
                                 }
                                 className="h-10 w-10 rounded-xl bg-black/40 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-black transition-all"
                               >
@@ -248,7 +211,7 @@ export function AdminDashboard() {
                                 size="icon"
                                 variant="outline"
                                 onClick={() =>
-                                  handleDocumentAction(doc.id, 'rejected', doc.hotel, doc.type)
+                                  handleDocumentAction(doc.id, 'rejected')
                                 }
                                 className="h-10 w-10 rounded-xl bg-black/40 border-destructive/30 text-destructive hover:bg-destructive hover:text-white transition-all"
                               >

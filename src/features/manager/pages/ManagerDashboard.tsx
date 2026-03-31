@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Hotel, LayoutList, Users, TrendingUp } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Input } from '../../../components/ui/input'
 import {
   Sheet,
@@ -29,57 +30,82 @@ import {
 } from '../../../components/ui/table'
 import { Badge } from '../../../components/ui/badge'
 import { motion } from 'framer-motion'
-
-// Expanded Mock Data
-const MOCK_HOTELS = [
-  {
-    id: '1',
-    name: 'The Grand Sapphire',
-    image:
-      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-    location: 'Maldives',
-    status: 'ACTIVE',
-    rooms: 45,
-    guests: 112,
-  },
-  {
-    id: '2',
-    name: 'Metropolitan Oasis',
-    image:
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
-    location: 'Tokyo',
-    status: 'PENDING',
-    rooms: 0,
-    guests: 0,
-  },
-]
-
-const MOCK_ROOMS = [
-  {
-    id: '101',
-    type: 'OceanView Suite',
-    hotel: 'The Grand Sapphire',
-    price: 550,
-    capacity: 2,
-    available: 5,
-  },
-  {
-    id: '102',
-    type: 'Deluxe King',
-    hotel: 'The Grand Sapphire',
-    price: 350,
-    capacity: 2,
-    available: 12,
-  },
-]
-
-const RECENT_GUESTS = [
-  { id: 'g1', name: 'Alice Waverly', room: 'Suite 101', checkIn: 'Today', status: 'Checked In' },
-  { id: 'g2', name: 'Marcus Chen', room: 'Deluxe 204', checkIn: 'Tomorrow', status: 'Confirmed' },
-]
+import { managerApi } from '../api/managerApi'
+import type { Hotel as HotelData, RoomType } from '../api/managerApi'
 
 export function ManagerDashboard() {
   const [isAddPropertyOpen, setIsAddPropertyOpen] = useState(false)
+  const [hotels, setHotels] = useState<HotelData[]>([])
+  const [rooms, setRooms] = useState<RoomType[]>([])
+  const [newHotelForm, setNewHotelForm] = useState({ name: '', location: '', description: 'Luxury hotel powered by API' })
+
+  // New room and inventory states
+  const [isAddRoomOpen, setIsAddRoomOpen] = useState(false)
+  const [newRoomForm, setNewRoomForm] = useState({ hotelId: '', name: '', capacity: '2', basePrice: '150' })
+  
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false)
+  const [selectedRoom, setSelectedRoom] = useState<RoomType | null>(null)
+  const [inventoryForm, setInventoryForm] = useState({ startDate: '', endDate: '', totalRooms: '10' })
+
+  useEffect(() => {
+    managerApi.getMyHotels()
+      .then(async (fetchedHotels) => {
+        setHotels(fetchedHotels)
+        if (fetchedHotels.length > 0) {
+          setNewRoomForm((prev) => ({
+            ...prev,
+            hotelId: prev.hotelId || String(fetchedHotels[0].id),
+          }))
+        }
+        const allRoomsPromises = fetchedHotels.map(h => managerApi.getHotelRoomTypes(h.id))
+        const allRoomsArrays = await Promise.all(allRoomsPromises)
+        setRooms(allRoomsArrays.flat())
+      })
+      .catch((err) => console.error('Failed to load manager dashboard data', err))
+  }, [])
+
+  const handleAddProperty = async () => {
+    try {
+      const created = await managerApi.createHotel(newHotelForm)
+      setHotels(prev => [...prev, created])
+      setIsAddPropertyOpen(false)
+      setNewHotelForm({ name: '', location: '', description: 'Luxury hotel powered by API' })
+    } catch (err) {
+      console.error('Failed to create hotel', err)
+    }
+  }
+
+  const handleAddRoom = async () => {
+    try {
+      const created = await managerApi.createRoomType({
+        hotelId: Number(newRoomForm.hotelId),
+        name: newRoomForm.name,
+        capacity: Number(newRoomForm.capacity),
+        basePrice: Number(newRoomForm.basePrice),
+      })
+      setRooms((prev) => [...prev, created])
+      setIsAddRoomOpen(false)
+      setNewRoomForm({ hotelId: '', name: '', capacity: '2', basePrice: '150' })
+    } catch (err) {
+      console.error('Failed to create room type', err)
+    }
+  }
+
+  const handleManageInventory = async () => {
+    if (!selectedRoom) return
+    try {
+      await managerApi.bulkUpdateInventory({
+        roomTypeId: selectedRoom.id,
+        startDate: inventoryForm.startDate,
+        endDate: inventoryForm.endDate,
+        totalRooms: Number(inventoryForm.totalRooms),
+      })
+      setIsInventoryOpen(false)
+      setInventoryForm({ startDate: '', endDate: '', totalRooms: '10' })
+    } catch (err) {
+      console.error('Failed to bulk update inventory', err)
+    }
+  }
 
   return (
     <div className="relative min-h-screen">
@@ -117,7 +143,7 @@ export function ManagerDashboard() {
               <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 flex items-center justify-center mb-2">
                 <Hotel className="w-6 h-6 text-cyan-400" />
               </div>
-              <h3 className="text-4xl font-black text-white">2</h3>
+              <h3 className="text-4xl font-black text-white">{hotels.length}</h3>
               <p className="text-sm text-cyan-100/60 font-bold uppercase tracking-widest">
                 Total Properties
               </p>
@@ -175,14 +201,14 @@ export function ManagerDashboard() {
 
           <TabsContent value="hotels" className="space-y-6 outline-none">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {MOCK_HOTELS.map((hotel) => (
+              {hotels.map((hotel) => (
                 <Card
                   key={hotel.id}
                   className="border-0 bg-white/5 backdrop-blur-xl overflow-hidden group hover:bg-white/10 transition-all duration-300"
                 >
                   <div className="h-56 relative overflow-hidden">
                     <img
-                      src={hotel.image}
+                      src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
                       alt={hotel.name}
                       className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                       loading="lazy"
@@ -210,15 +236,26 @@ export function ManagerDashboard() {
                       <span className="text-xs font-bold text-cyan-100/50 uppercase tracking-widest mb-1">
                         Inventory
                       </span>
-                      <span className="text-lg font-medium text-white">{hotel.rooms} Rooms</span>
+                      <span className="text-lg font-medium text-white">{rooms.filter(r => r.hotelId === hotel.id).length} Room Types</span>
                     </div>
                     <div className="w-[1px] h-10 bg-white/10"></div>
                     <div className="flex flex-col items-end">
                       <span className="text-xs font-bold text-cyan-100/50 uppercase tracking-widest mb-1">
                         Occupancy
                       </span>
-                      <span className="text-lg font-bold text-cyan-400">{hotel.guests} Guests</span>
+                      <span className="text-lg font-bold text-cyan-400">--- Guests</span>
                     </div>
+                  </CardContent>
+                  <CardContent className="pt-0 pb-6 flex flex-wrap gap-2">
+                    <Button asChild variant="outline" className="border-white/10 text-white hover:bg-white/10">
+                      <Link to={`/manager/hotels/${hotel.id}/edit`}>Edit Hotel</Link>
+                    </Button>
+                    <Button asChild variant="outline" className="border-white/10 text-white hover:bg-white/10">
+                      <Link to={`/manager/hotels/${hotel.id}/facilities`}>Facilities</Link>
+                    </Button>
+                    <Button asChild variant="outline" className="border-white/10 text-white hover:bg-white/10">
+                      <Link to={`/manager/hotels/${hotel.id}/room-types`}>Room Types</Link>
+                    </Button>
                   </CardContent>
                 </Card>
               ))}
@@ -248,26 +285,11 @@ export function ManagerDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {RECENT_GUESTS.map((guest) => (
-                      <TableRow
-                        key={guest.id}
-                        className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                      >
-                        <TableCell className="py-4 px-6 font-medium text-white text-base">
-                          {guest.name}
-                        </TableCell>
-                        <TableCell className="py-4 text-cyan-100/80">{guest.room}</TableCell>
-                        <TableCell className="py-4 text-cyan-100/80">{guest.checkIn}</TableCell>
-                        <TableCell className="py-4 pr-6 text-right">
-                          <Badge
-                            variant="outline"
-                            className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 px-3 py-1"
-                          >
-                            {guest.status}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    <TableRow className="border-b border-white/5">
+                      <TableCell colSpan={4} className="py-6 text-center text-cyan-100/60">
+                        No guest data available.
+                      </TableCell>
+                    </TableRow>
                   </TableBody>
                 </Table>
               </CardContent>
@@ -276,11 +298,29 @@ export function ManagerDashboard() {
 
           <TabsContent value="rooms" className="outline-none">
             <Card className="border-0 bg-white/5 backdrop-blur-xl">
-              <CardHeader className="border-b border-white/5 pb-6">
-                <CardTitle className="text-2xl text-white">Room Inventory & Rates</CardTitle>
-                <CardDescription className="text-cyan-100/60 text-sm mt-1">
-                  Manage daily pricing, capacity, and availability.
-                </CardDescription>
+              <CardHeader className="border-b border-white/5 pb-6 flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-2xl text-white">Room Inventory & Rates</CardTitle>
+                  <CardDescription className="text-cyan-100/60 text-sm mt-1">
+                    Manage daily pricing, capacity, and availability.
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="border-white/10 text-white hover:bg-white/10 h-10 rounded-xl"
+                  >
+                    <Link to="/manager/inventory/update">Single Date</Link>
+                  </Button>
+                  <Button
+                    onClick={() => setIsAddRoomOpen(true)}
+                    className="bg-cyan-500 hover:bg-cyan-400 text-black font-bold h-10 px-4 rounded-xl flex items-center"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Room
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
@@ -292,28 +332,42 @@ export function ManagerDashboard() {
                       <TableHead className="py-5 font-bold text-cyan-100/70">Property</TableHead>
                       <TableHead className="py-5 font-bold text-cyan-100/70">Base Rate</TableHead>
                       <TableHead className="py-5 pr-6 text-right font-bold text-cyan-100/70">
-                        Availability
+                        Actions
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {MOCK_ROOMS.map((room) => (
+                    {rooms.map((room) => (
                       <TableRow
                         key={room.id}
                         className="border-b border-white/5 hover:bg-white/5 transition-colors"
                       >
                         <TableCell className="py-4 px-6 font-bold text-white text-base">
-                          {room.type}
+                          {room.name}
                         </TableCell>
-                        <TableCell className="py-4 text-cyan-100/80">{room.hotel}</TableCell>
+                        <TableCell className="py-4 text-cyan-100/80">
+                          {hotels.find((h) => h.id === room.hotelId)?.name || `Hotel #${room.hotelId}`}
+                        </TableCell>
                         <TableCell className="py-4 font-black text-cyan-400 text-lg">
-                          ${room.price}
+                          ${room.basePrice}
                           <span className="text-xs font-normal text-cyan-100/50"> /nt</span>
                         </TableCell>
                         <TableCell className="py-4 pr-6 text-right">
-                          <span className="inline-flex items-center justify-center bg-white/10 text-white rounded-lg px-3 py-1 font-bold tracking-widest uppercase text-xs">
-                            {room.available} left
-                          </span>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              onClick={() => {
+                                setSelectedRoom(room)
+                                setIsInventoryOpen(true)
+                              }}
+                              className="inline-flex items-center justify-center bg-white/10 hover:bg-white/20 text-white rounded-lg px-3 py-1 font-bold tracking-widest uppercase text-xs transition-colors h-8"
+                            >
+                              Bulk Inventory
+                            </Button>
+                            <Button asChild variant="outline" className="border-white/10 text-white hover:bg-white/10 h-8 px-3">
+                              <Link to={`/manager/room-types/${room.id}`}>Edit</Link>
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -341,6 +395,8 @@ export function ManagerDashboard() {
                 Property Name
               </label>
               <Input
+                value={newHotelForm.name}
+                onChange={(e) => setNewHotelForm({ ...newHotelForm, name: e.target.value })}
                 placeholder="e.g. The Grand Sapphire"
                 className="bg-white/5 border-white/10 h-12 rounded-xl text-white focus-visible:ring-cyan-500"
               />
@@ -351,6 +407,8 @@ export function ManagerDashboard() {
                 Location
               </label>
               <Input
+                value={newHotelForm.location}
+                onChange={(e) => setNewHotelForm({ ...newHotelForm, location: e.target.value })}
                 placeholder="e.g. Maldives"
                 className="bg-white/5 border-white/10 h-12 rounded-xl text-white focus-visible:ring-cyan-500"
               />
@@ -377,10 +435,155 @@ export function ManagerDashboard() {
 
           <SheetFooter className="mt-8">
             <Button
-              onClick={() => setIsAddPropertyOpen(false)}
+              onClick={handleAddProperty}
               className="w-full text-base bg-cyan-500 hover:bg-cyan-400 text-black font-bold h-12 rounded-xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]"
             >
               Submit Property
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {/* Add Room Type Slide-out Panel */}
+      <Sheet open={isAddRoomOpen} onOpenChange={setIsAddRoomOpen}>
+        <SheetContent className="bg-background border-l-white/10 sm:max-w-md w-full glass-card overflow-y-auto">
+          <SheetHeader className="mb-8">
+            <SheetTitle className="text-2xl font-black text-white">Add Room Type</SheetTitle>
+            <SheetDescription className="text-cyan-100/60 font-medium">
+              Create a new room configuration mapped to an existing hotel.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-cyan-100/50">
+                Property ID
+              </label>
+              <select
+                value={newRoomForm.hotelId}
+                onChange={(e) => setNewRoomForm({ ...newRoomForm, hotelId: e.target.value })}
+                className="bg-white/5 border border-white/10 h-12 rounded-xl text-white focus-visible:ring-cyan-500 px-3 w-full"
+              >
+                {hotels.length === 0 ? (
+                  <option value="" disabled>
+                    No properties found
+                  </option>
+                ) : (
+                  hotels.map((hotel) => (
+                    <option key={hotel.id} value={hotel.id}>
+                      {hotel.name} (#{hotel.id})
+                    </option>
+                  ))
+                )}
+              </select>
+              <p className="text-xs text-cyan-100/50">
+                Defaults to your first property. Update in the dropdown if needed.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-cyan-100/50">
+                Room Name
+              </label>
+              <Input
+                value={newRoomForm.name}
+                onChange={(e) => setNewRoomForm({ ...newRoomForm, name: e.target.value })}
+                placeholder="e.g. Ocean View Suite"
+                className="bg-white/5 border-white/10 h-12 rounded-xl text-white focus-visible:ring-cyan-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-cyan-100/50">
+                Capacity (Guests)
+              </label>
+              <Input
+                type="number"
+                value={newRoomForm.capacity}
+                onChange={(e) => setNewRoomForm({ ...newRoomForm, capacity: e.target.value })}
+                className="bg-white/5 border-white/10 h-12 rounded-xl text-white focus-visible:ring-cyan-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-cyan-100/50">
+                Base Price / Night
+              </label>
+              <Input
+                type="number"
+                value={newRoomForm.basePrice}
+                onChange={(e) => setNewRoomForm({ ...newRoomForm, basePrice: e.target.value })}
+                className="bg-white/5 border-white/10 h-12 rounded-xl text-white focus-visible:ring-cyan-500"
+              />
+            </div>
+          </div>
+
+          <SheetFooter className="mt-8">
+            <Button
+              onClick={handleAddRoom}
+              className="w-full text-base bg-cyan-500 hover:bg-cyan-400 text-black font-bold h-12 rounded-xl"
+              disabled={!newRoomForm.hotelId}
+            >
+              Add Room
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {/* Manage Inventory Slide-out Panel */}
+      <Sheet open={isInventoryOpen} onOpenChange={setIsInventoryOpen}>
+        <SheetContent className="bg-background border-l-white/10 sm:max-w-md w-full glass-card overflow-y-auto">
+          <SheetHeader className="mb-8">
+            <SheetTitle className="text-2xl font-black text-white">Bulk Update Inventory</SheetTitle>
+            <SheetDescription className="text-cyan-100/60 font-medium">
+              Update available rooms for <strong className="text-cyan-400">{selectedRoom?.name}</strong>.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-cyan-100/50">
+                Start Date
+              </label>
+              <Input
+                type="date"
+                value={inventoryForm.startDate}
+                onChange={(e) => setInventoryForm({ ...inventoryForm, startDate: e.target.value })}
+                className="bg-white/5 border-white/10 h-12 rounded-xl text-white focus-visible:ring-cyan-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-cyan-100/50">
+                End Date (Exclusive)
+              </label>
+              <Input
+                type="date"
+                value={inventoryForm.endDate}
+                onChange={(e) => setInventoryForm({ ...inventoryForm, endDate: e.target.value })}
+                className="bg-white/5 border-white/10 h-12 rounded-xl text-white focus-visible:ring-cyan-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-widest text-cyan-100/50">
+                Total Rooms Available
+              </label>
+              <Input
+                type="number"
+                value={inventoryForm.totalRooms}
+                onChange={(e) => setInventoryForm({ ...inventoryForm, totalRooms: e.target.value })}
+                className="bg-white/5 border-white/10 h-12 rounded-xl text-white focus-visible:ring-cyan-500"
+              />
+            </div>
+          </div>
+
+          <SheetFooter className="mt-8">
+            <Button
+              onClick={handleManageInventory}
+              className="w-full text-base bg-cyan-500 hover:bg-cyan-400 text-black font-bold h-12 rounded-xl"
+            >
+              Update Inventory
             </Button>
           </SheetFooter>
         </SheetContent>

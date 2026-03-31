@@ -41,7 +41,6 @@ export function AdminDashboard() {
       await adminApi.decideHotel(id, action === 'approved' ? 'APPROVE' : 'REJECT')
       // Remove from queue
       setPendingDocs((prev) => prev.filter((doc) => doc.id !== id))
-
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to update hotel status.'
       toast.error(message)

@@ -32,6 +32,14 @@ import { reviewApi, type ReviewResponse } from '../api/reviewApi'
 import { getStoredAuthUser } from '../../auth/api/authSession'
 import { toast } from 'sonner'
 
+interface Room {
+  id: string
+  name: string
+  price: number
+  capacity: string
+  image: string
+}
+
 export function HotelDetails() {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
@@ -40,7 +48,7 @@ export function HotelDetails() {
 
   // Slide out checkout state
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
-  const [selectedRoom, setSelectedRoom] = useState<any>(null)
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
   const [isBooking, setIsBooking] = useState(false)
 
   const [promotions, setPromotions] = useState<PromotionResponse[]>([])
@@ -218,7 +226,7 @@ export function HotelDetails() {
     )
   }
 
-  const handleBookInitiation = (room: any) => {
+  const handleBookInitiation = (room: Room) => {
     setSelectedRoom(room)
     setIsCheckoutOpen(true)
   }

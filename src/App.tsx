@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from './components/ui/sonner'
 import { MainLayout } from './layouts/MainLayout'
 import { HotelSearch } from './features/customer/pages/HotelSearch'
+import { SearchResults } from './features/customer/pages/SearchResults'
+import { HotelDetails } from './features/customer/pages/HotelDetails'
 import { Login } from './features/auth/pages/Login'
 import { Register } from './features/auth/pages/Register'
 import { ManagerDashboard } from './features/manager/pages/ManagerDashboard'
@@ -26,6 +28,34 @@ function App() {
                   transition={{ duration: 0.3 }}
                 >
                   <HotelSearch />
+                </motion.div>
+              }
+            />
+
+            <Route
+              path="/search"
+              element={
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <SearchResults />
+                </motion.div>
+              }
+            />
+
+            <Route
+              path="/hotel/:id"
+              element={
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <HotelDetails />
                 </motion.div>
               }
             />

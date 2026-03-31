@@ -14,7 +14,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/popover'
 import { Calendar } from '../../../components/ui/calendar'
 import { HotelCard } from '../components/HotelCard'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import type { DateRange } from 'react-day-picker'
 
@@ -56,6 +56,7 @@ const MOCK_HOTELS = [
 ]
 
 export function HotelSearch() {
+  const navigate = useNavigate()
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
 
   return (
@@ -177,7 +178,10 @@ export function HotelSearch() {
                   </div>
                 </div>
 
-                <Button className="h-[70px] w-full md:w-[160px] rounded-2xl font-black bg-gradient-to-r from-primary to-indigo-500 hover:from-primary/90 hover:to-indigo-500/90 text-white shadow-[0_0_30px_rgba(var(--primary),0.4)] text-lg transition-transform active:scale-95 group shrink-0">
+                <Button
+                  onClick={() => navigate('/search')}
+                  className="h-[70px] w-full md:w-[160px] rounded-2xl font-black bg-gradient-to-r from-primary to-indigo-500 hover:from-primary/90 hover:to-indigo-500/90 text-white shadow-[0_0_30px_rgba(var(--primary),0.4)] text-lg transition-transform active:scale-95 group shrink-0"
+                >
                   <Search className="w-6 h-6 mr-2 group-hover:scale-110 transition-transform" />
                   Explore
                 </Button>

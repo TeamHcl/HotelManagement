@@ -17,7 +17,6 @@ export function BrowseHotels() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    setIsLoading(true)
     customerApi
       .listActiveHotels()
       .then(setHotels)

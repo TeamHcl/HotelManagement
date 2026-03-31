@@ -83,7 +83,7 @@ export function AdminDashboard() {
 
     // Add to system activity
     const newActivity = {
-      id: Date.now().toString(),
+      id: `act_${id}_${action}`,
       log: `Document ${docType} for ${hotelName} was ${action}`,
       time: 'Just now',
       icon:

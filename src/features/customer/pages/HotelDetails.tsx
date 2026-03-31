@@ -18,13 +18,21 @@ import { Popover, PopoverContent, PopoverTrigger } from '../../../components/ui/
 import { format } from 'date-fns'
 import { CalendarIcon, MapPin, Star, Users, Briefcase, CheckCircle2 } from 'lucide-react'
 
+interface Room {
+  id: string
+  name: string
+  price: number
+  capacity: string
+  image: string
+}
+
 export function HotelDetails() {
   const { id } = useParams()
   const navigate = useNavigate()
 
   // Slide out checkout state
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
-  const [selectedRoom, setSelectedRoom] = useState<any>(null)
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
 
   // Basic mock date handling for the checkout
   const [date, setDate] = useState<Date | undefined>(new Date())
@@ -60,7 +68,7 @@ export function HotelDetails() {
     ],
   }
 
-  const handleBookInitiation = (room: any) => {
+  const handleBookInitiation = (room: Room) => {
     setSelectedRoom(room)
     setIsCheckoutOpen(true)
   }

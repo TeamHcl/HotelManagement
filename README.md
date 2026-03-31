@@ -97,6 +97,30 @@ Visit `http://localhost:5173` to explore the application.
 
 The user interface isn't just painted on—it's engineered. The aesthetic relies heavily on sophisticated spatial geometry, precision ambient radial illumination (`blur-[150px]`), and deeply translucent glassmorphic components (`bg-white/5 backdrop-blur-xl`). Every interactive element utilizes Framer Motion to guarantee that layout shifts feel responsive and organic rather than abrupt.
 
+## 🔁 Workflow
+
+1) Install dependencies and run the dev server.
+2) Keep feature work isolated to feature folders under src/features.
+3) Use shadcn/ui primitives from src/components/ui for consistent design.
+4) Validate routes and role gating before review.
+5) Build and preview before opening a PR.
+
+## 🧭 Architecture
+
+- Feature-first structure under src/features with API, pages, and components separated per domain.
+- Shared UI primitives live in src/components/ui and are composed by feature UIs.
+- Layout shells live in src/layouts and are shared across role-based routes.
+- Central API client lives in src/lib/apiClient.ts for consistent HTTP configuration.
+- Runtime configuration is handled in src/features/runtime-config.
+
+## 🗺️ Proposed plan
+
+- Integrate the Spring Boot API with typed endpoints and auth flows.
+- Add role-based data loading, optimistic updates, and error boundaries.
+- Expand test coverage for booking funnel and admin workflows.
+- Improve accessibility audits and keyboard navigation.
+- Add CI checks for lint, typecheck, and build.
+
 ## 🔮 Roadmap
 
 Currently, LuxeStay serves as a high-fidelity frontend prototype. The upcoming roadmap features integrating this exact architecture with a deeply unified **Spring Boot REST API** structure that handles user roles, JWT authentication, and SQL relationship mapping for hotels, rooms, and bookings.

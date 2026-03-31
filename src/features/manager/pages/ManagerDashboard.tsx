@@ -1,4 +1,4 @@
-import { Plus, Hotel, LayoutList, CalendarDays, ExternalLink, Users, TrendingUp } from 'lucide-react';
+import { Plus, Hotel, LayoutList, Users, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';

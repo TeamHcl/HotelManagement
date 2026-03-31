@@ -64,6 +64,65 @@ LuxeStay is engineered using modern, state-of-the-art frontend tooling to guaran
 
 ---
 
+## 🧭 Information Architecture
+
+The frontend mirrors backend modules and exposes role-specific surfaces. Routing is role-aware and isolates customer, manager, and admin experiences while reusing shared UI primitives.
+
+### Feature map
+
+- Auth: login, register, session bootstrapping
+- Customer: search, hotel detail, availability, checkout, confirmation
+- Manager: hotel onboarding, room types, inventory, documents
+- Admin: review queue, approvals, system overview
+- Shared: layouts, protected routing, UI primitives
+
+### Role-based routing (diagram)
+
+```mermaid
+flowchart TD
+  Start[Landing or Deep Link] --> Auth{Authenticated?}
+  Auth -- No --> Login[Login/Register]
+  Auth -- Yes --> Role{User Role}
+  Role -- CUSTOMER --> Customer[Customer Routes]
+  Role -- MANAGER --> Manager[Manager Routes]
+  Role -- ADMIN --> Admin[Admin Routes]
+  Customer --> Search[Search & Filter]
+  Customer --> Hotel[Hotel Detail]
+  Customer --> Booking[Checkout & Confirmation]
+  Manager --> Onboard[Hotel Onboarding]
+  Manager --> Inventory[Rooms & Inventory]
+  Admin --> Review[Approval Queue]
+  Admin --> Monitor[System Overview]
+```
+
+## ✅ Role flows
+
+### Customer flow
+
+1) Browse hotels and filters
+2) View availability and room options
+3) Complete booking checkout
+4) Receive confirmation and review later
+
+### Manager flow
+
+1) Create hotel profile
+2) Upload documents for verification
+3) Configure room types and inventory
+4) Track performance and updates
+
+### Admin flow
+
+1) Review hotel documents
+2) Approve or reject listings
+3) Monitor system activity
+
+## 🔗 Frontend and backend alignment
+
+- Frontend feature folders map to backend modules under com.hcl.backend_template.
+- API client in src/lib/apiClient.ts targets Spring Boot REST endpoints.
+- Role gating uses customer, manager, and admin routes to align with JWT roles.
+
 ## 🚀 Setup & Local Development
 
 Run the entire LuxeStay frontend interface locally in seconds.

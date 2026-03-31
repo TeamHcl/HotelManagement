@@ -25,7 +25,7 @@ import {
 } from '../../../components/ui/select'
 import { differenceInCalendarDays, format } from 'date-fns'
 import { CalendarIcon, MapPin, Star, Users, Briefcase } from 'lucide-react'
-import { customerApi } from '../api/customerApi'
+import { customerApi, type AvailabilityResponse, type HotelPublicResponse } from '../api/customerApi'
 import { bookingApi } from '../api/bookingApi'
 import { promotionApi, type PromotionResponse } from '../api/promotionApi'
 import { reviewApi, type ReviewResponse } from '../api/reviewApi'
@@ -36,7 +36,17 @@ interface Room {
   id: string
   name: string
   price: number
+  priceLabel: string
   capacity: string
+  image: string
+}
+
+interface HotelDetailsView {
+  id: HotelPublicResponse['id']
+  name: HotelPublicResponse['name']
+  location: HotelPublicResponse['location']
+  description: HotelPublicResponse['description']
+  rating: HotelPublicResponse['averageRating']
   image: string
 }
 
@@ -58,7 +68,7 @@ export function HotelDetails() {
   const [date, setDate] = useState<Date | undefined>(new Date())
 
   // Availability state
-  const [availability, setAvailability] = useState<any>(null)
+  const [availability, setAvailability] = useState<AvailabilityResponse | null>(null)
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false)
   const [availabilityError, setAvailabilityError] = useState('')
 
@@ -76,8 +86,9 @@ export function HotelDetails() {
       try {
         const res = await customerApi.checkAvailability(selectedRoom.id, checkInStr, checkOutStr)
         setAvailability(res)
-      } catch (err: any) {
-        setAvailabilityError(err.message || 'Not available')
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Not available'
+        setAvailabilityError(message)
         setAvailability(null)
       } finally {
         setIsCheckingAvailability(false)
@@ -86,8 +97,8 @@ export function HotelDetails() {
     check()
   }, [selectedRoom, date])
 
-  const [hotel, setHotel] = useState<any | null>(null)
-  const [rooms, setRooms] = useState<any[]>([])
+  const [hotel, setHotel] = useState<HotelDetailsView | null>(null)
+  const [rooms, setRooms] = useState<Room[]>([])
   const [isAvailabilityView, setIsAvailabilityView] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState('')

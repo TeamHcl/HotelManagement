@@ -11,33 +11,50 @@ import { toast } from 'sonner'
 export function SearchResults() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [results, setResults] = useState<SearchResultItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [results, setResults] = useState<SearchResultItem[] | null>(null)
   const checkIn = searchParams.get('checkIn') || ''
   const checkOut = searchParams.get('checkOut') || ''
+  const isLoading = results === null
 
   useEffect(() => {
-    const hotelId = Number(searchParams.get('hotelId'))
-    const checkIn = searchParams.get('checkIn') || ''
-    const checkOut = searchParams.get('checkOut') || ''
-    const guests = Number(searchParams.get('guests') || '0') || undefined
+    let isMounted = true
 
-    if (!hotelId || !checkIn || !checkOut) {
-      setIsLoading(false)
-      setResults([])
-      return
-    }
+    const loadResults = async () => {
+      const hotelId = Number(searchParams.get('hotelId'))
+      const checkIn = searchParams.get('checkIn') || ''
+      const checkOut = searchParams.get('checkOut') || ''
+      const guests = Number(searchParams.get('guests') || '0') || undefined
 
-    setIsLoading(true)
-    customerApi
-      .searchRoomTypes(hotelId, checkIn, checkOut, guests)
-      .then(setResults)
-      .catch((err) => {
+      if (!hotelId || !checkIn || !checkOut) {
+        if (isMounted) {
+          setResults([])
+        }
+        return
+      }
+
+      if (isMounted) {
+        setResults(null)
+      }
+
+      try {
+        const data = await customerApi.searchRoomTypes(hotelId, checkIn, checkOut, guests)
+        if (isMounted) {
+          setResults(data)
+        }
+      } catch (err) {
         const message = err instanceof Error ? err.message : 'Search failed.'
         toast.error(message)
-        setResults([])
-      })
-      .finally(() => setIsLoading(false))
+        if (isMounted) {
+          setResults([])
+        }
+      }
+    }
+
+    void loadResults()
+
+    return () => {
+      isMounted = false
+    }
   }, [searchParams])
 
   return (
@@ -60,7 +77,7 @@ export function SearchResults() {
             <p className="text-muted-foreground mt-1">
               {isLoading
                 ? 'Searching availability...'
-                : `Found ${results.length} options matching your criteria.`}
+                : `Found ${results?.length ?? 0} options matching your criteria.`}
             </p>
           </div>
 
@@ -87,7 +104,7 @@ export function SearchResults() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
-          {results.map((room, index) => (
+          {(results ?? []).map((room, index) => (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -167,7 +184,7 @@ export function SearchResults() {
               </Card>
             </motion.div>
           ))}
-          {!isLoading && results.length === 0 && (
+          {!isLoading && (results?.length ?? 0) === 0 && (
             <Card className="border-0 bg-white/5 backdrop-blur-xl">
               <CardContent className="p-10 text-center text-cyan-100/60">
                 No room types matched your search.
